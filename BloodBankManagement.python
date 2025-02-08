@@ -1,0 +1,105 @@
+import datetime
+
+class BloodBank:
+    def __init__(self):
+        self.donors = {}  # Store donor information (ID: Donor object)
+        self.blood_inventory = {}  # Store blood type and quantity (BloodType: units)
+        self.requests = []  # Store blood requests (Request objects)
+        self.next_donor_id = 1
+        self.next_request_id = 1
+
+    def add_donor(self, name, blood_type, dob, address, phone):
+        donor = Donor(self.next_donor_id, name, blood_type, dob, address, phone)
+        self.donors[self.next_donor_id] = donor
+        self.next_donor_id += 1
+        return donor.donor_id
+
+    def add_blood_inventory(self, blood_type, units):
+        if blood_type in self.blood_inventory:
+            self.blood_inventory[blood_type] += units
+        else:
+            self.blood_inventory[blood_type] = units
+
+    def remove_blood_inventory(self, blood_type, units):
+        if blood_type in self.blood_inventory and self.blood_inventory[blood_type] >= units:
+            self.blood_inventory[blood_type] -= units
+            return True
+        return False  # Not enough blood in inventory
+
+    def make_blood_request(self, patient_name, blood_type, units_required, hospital):
+        request = BloodRequest(self.next_request_id, patient_name, blood_type, units_required, hospital)
+        self.requests.append(request)
+        self.next_request_id += 1
+        return request.request_id
+
+    def fulfill_request(self, request_id):
+        for request in self.requests:
+            if request.request_id == request_id:
+                if self.remove_blood_inventory(request.blood_type, request.units_required):
+                    request.status = "Fulfilled"
+                    return True
+                else:
+                    request.status = "Pending (Insufficient Blood)"
+                    return False
+        return False  # Request not found
+
+    def display_inventory(self):
+        print("Blood Inventory:")
+        for blood_type, units in self.blood_inventory.items():
+            print(f"{blood_type}: {units} units")
+
+    def display_donors(self):
+        print("Donors:")
+        for donor_id, donor in self.donors.items():
+            print(donor)
+
+    def display_requests(self):
+        print("Blood Requests:")
+        for request in self.requests:
+            print(request)
+
+class Donor:
+    def __init__(self, donor_id, name, blood_type, dob, address, phone):
+        self.donor_id = donor_id
+        self.name = name
+        self.blood_type = blood_type
+        self.dob = dob  # Date of birth (you might want to use datetime)
+        self.address = address
+        self.phone = phone
+
+    def __str__(self):
+        return f"ID: {self.donor_id}, Name: {self.name}, Blood Type: {self.blood_type}, DOB: {self.dob}, Address: {self.address}, Phone: {self.phone}"
+
+
+class BloodRequest:
+    def __init__(self, request_id, patient_name, blood_type, units_required, hospital):
+        self.request_id = request_id
+        self.patient_name = patient_name
+        self.blood_type = blood_type
+        self.units_required = units_required
+        self.hospital = hospital
+        self.status = "Pending"  # Initial status
+
+    def __str__(self):
+        return f"Request ID: {self.request_id}, Patient: {self.patient_name}, Blood Type: {self.blood_type}, Units: {self.units_required}, Hospital: {self.hospital}, Status: {self.status}"
+
+
+
+# Example Usage:
+blood_bank = BloodBank()
+
+donor_id1 = blood_bank.add_donor("Alice", "A+", "1990-05-10", "123 Main St", "555-1234")
+donor_id2 = blood_bank.add_donor("Bob", "O-", "1985-11-20", "456 Oak Ave", "555-5678")
+
+blood_bank.add_blood_inventory("A+", 5)
+blood_bank.add_blood_inventory("O-", 3)
+
+request_id1 = blood_bank.make_blood_request("Charlie", "A+", 2, "City Hospital")
+request_id2 = blood_bank.make_blood_request("David", "O-", 4, "General Hospital")
+
+blood_bank.fulfill_request(request_id1)
+blood_bank.fulfill_request(request_id2) # Will be pending
+
+blood_bank.display_inventory()
+blood_bank.display_donors()
+blood_bank.display_requests()
